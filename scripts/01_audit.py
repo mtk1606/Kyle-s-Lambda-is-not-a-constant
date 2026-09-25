@@ -90,8 +90,12 @@ def main():
                                      "split": gname, "group": gval, **reliability(d, est)})
             log.info("%s k=%d W=%d done", sym, k, W)
     RESULTS.mkdir(exist_ok=True)
-    pd.DataFrame(rel_rows).to_csv(RESULTS / "phase1_reliability.csv", index=False)
-    pd.concat(cons_rows).to_csv(RESULTS / "phase1_constancy.csv", index=False)
+    for path, df in [(RESULTS / "phase1_reliability.csv", pd.DataFrame(rel_rows)),
+                     (RESULTS / "phase1_constancy.csv", pd.concat(cons_rows))]:
+        if path.exists():  # keep other symbols' rows
+            old = pd.read_csv(path)
+            df = pd.concat([old[~old.symbol.isin(a.symbols)], df], ignore_index=True)
+        df.to_csv(path, index=False)
 
 
 if __name__ == "__main__":

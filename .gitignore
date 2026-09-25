@@ -2,7 +2,7 @@ __pycache__/
 *.pyc
 .pytest_cache/
 *.egg-info/
-data/
+data/*
 !data/README.md
 distribution/private/
 .venv/
