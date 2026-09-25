@@ -48,3 +48,14 @@ def test_markout_signs():
     assert np.isclose(mk.loc[0, "hs_1"], 1e4 * 0.05 / 100.05, rtol=1e-3)
     # after 5s mid +1%: maker who sold is down ~100 bps
     assert np.isclose(mk.loc[0, "as_5"], 100.0, rtol=1e-3)
+
+
+def test_markout_half_spread_with_fx_conversion():
+    # same trade as above, but the pair is quoted in BTC at 1 BTC = $20,000 and sn is in USD
+    n = 20
+    mid = np.full(n, 100.0)
+    bars = pd.DataFrame({"n_fills": np.ones(n, int), "mid": mid, "sn": 0.0, "sv": 0.0, "notional": 0.0,
+                         "fx": 20_000.0}, index=pd.RangeIndex(0, n))
+    bars.loc[3, ["sn", "sv", "notional"]] = [100.05 * 20_000, 1.0, 100.05 * 20_000]
+    mk = window_markouts(bars, 10, taus=(1,))
+    assert np.isclose(mk.loc[0, "hs_1"], 1e4 * 0.05 / 100.05, rtol=1e-3)

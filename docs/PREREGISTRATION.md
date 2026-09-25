@@ -67,3 +67,19 @@ What the development pairs showed:
 4. Lambda is by definition the price of impact, so the natural place for the forecast to
    earn money is on the other side: sizing child orders for someone who has to trade.
    That is P7.
+
+## Deviations log
+
+* **Commit `8f3e63b`** was the intended freeze. Because of a `.gitignore` pattern
+  (`data/`), it left out `src/kylelambda/data/{binance,l1}.py`. Those files were already
+  in use for the development results and were committed unchanged in `2f28695`, along
+  with an I/O fix to `scripts/01_audit.py` so that it merges per-symbol rows instead of
+  overwriting them. Both commits predate any holdout analysis. No estimator, parameter
+  or threshold changed.
+* **After the first holdout run**, I found a units bug in `markout.py` for pairs converted
+  to USD: the effective half-spread term `sn - mid * sv` mixed USD (`sn`) with BTC
+  (`mid * sv`). It affects P6 and P7 on ETHBTC and LTCBTC only. Adverse selection, lambda
+  and P1 to P5 do not use that term. The fix keeps the conversion rate as a column
+  (`fx`) and applies it, with a regression test. The as-run scorecard is preserved in
+  `results/scorecard_as_run.csv` (P6 0/4, P7 1/4). The corrected one is
+  `results/scorecard.csv` (P6 0/4, P7 2/4). Both verdicts are the same.

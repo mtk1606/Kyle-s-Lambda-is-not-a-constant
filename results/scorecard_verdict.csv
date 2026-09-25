@@ -1,0 +1,8 @@
+,holdout
+P1,3/4 -> HOLDS
+P2,4/4 -> HOLDS
+P3,4/4 -> HOLDS
+P4,0/4 -> FAILS
+P5,4/4 -> HOLDS
+P6,0/4 -> FAILS
+P7,2/4 -> FAILS

@@ -36,8 +36,11 @@ def window_markouts(bars1s: pd.DataFrame, window_sec: int, taus=TAUS) -> pd.Data
     notional = bars1s["notional"].to_numpy()
     ok = valid_seconds(bars1s)
     out = {"t0": bars1s.index.to_numpy()[: nwin * per : per]}
-    # d_i (p_i - m) / m * p_i q_i ~= d_i (p_i - m) q_i, in quote currency
-    hs = np.where(np.isfinite(m_prev), sn - m_prev * sv, 0.0)
+    # d_i (p_i - m) / m * p_i q_i ~= d_i (p_i - m) q_i, in quote currency.
+    # For pairs converted to USD (00b_quote_to_usd.py) sn is in USD but mid * sv is still
+    # in the quote currency, so it has to be converted too.
+    fx = bars1s["fx"].to_numpy() if "fx" in bars1s else 1.0
+    hs = np.where(np.isfinite(m_prev), sn - m_prev * sv * fx, 0.0)
     base_ok = np.isfinite(m_prev) & ok
     for tau in taus:
         m_fwd = np.r_[m[tau:], np.full(tau, np.nan)]

@@ -52,3 +52,32 @@ def test_threshold_is_causal():
     s2 = s.copy(); s2.iloc[3000] = 1e9
     thr2 = causal_threshold(s2, 3600, 0.8)
     assert np.allclose(thr.iloc[:3001].fillna(-1), thr2.iloc[:3001].fillna(-1))
+
+
+def test_execution_schedules_collapse_to_twap_when_scores_are_flat():
+    from kylelambda.policy import run_execution, summarize_execution
+    n = 24 * 40
+    idx = 1_500_000_000 - 1_500_000_000 % 86400 + 3600 * np.arange(n)
+    rng = np.random.default_rng(0)
+    p = pd.DataFrame({"f_trailing": 5.0, "f_seasonal": 5.0, "f_har": 5.0,
+                      "lambda_next": 5 + rng.standard_normal(n), "hs_60": 1.0,
+                      "notional_next": 1.0 + rng.random(n)}, index=idx)
+    p["date"] = pd.to_datetime(p.index, unit="s").strftime("%Y-%m-%d")
+    s = summarize_execution(run_execution(p, 3600, 0.05))
+    assert np.allclose(s["cost_bps"], s.loc["twap", "cost_bps"])
+    assert np.allclose(s["volume_musd"], s.loc["twap", "volume_musd"])
+
+
+def test_execution_prefers_cheap_windows_when_forecast_is_right():
+    from kylelambda.policy import run_execution, summarize_execution
+    n = 24 * 60
+    idx = 1_500_000_000 - 1_500_000_000 % 86400 + 3600 * np.arange(n)
+    rng = np.random.default_rng(1)
+    lam = np.exp(rng.standard_normal(n))
+    p = pd.DataFrame({"f_trailing": np.roll(lam, 1), "f_seasonal": 1.0, "f_har": lam,
+                      "lambda_next": lam, "hs_60": 1.0, "notional_next": 10.0}, index=idx)
+    p["date"] = pd.to_datetime(p.index, unit="s").strftime("%Y-%m-%d")
+    s = summarize_execution(run_execution(p, 3600, 0.1))
+    # a correct forecast beats TWAP; tilting on a stale score of an i.i.d. lambda is pure noise
+    # and, because impact is convex in size, costs more than not tilting at all
+    assert s.loc["har", "cost_bps"] < s.loc["twap", "cost_bps"] < s.loc["trailing", "cost_bps"]

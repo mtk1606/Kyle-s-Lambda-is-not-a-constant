@@ -4,7 +4,7 @@
 
 Only the dollar-denominated flow columns change (notional, sn, ssqrt_usd); returns are
 in bps of the pair's own mid and are left alone, so lambda comes out in bps per $M
-and is comparable across pairs.
+and is comparable across pairs. The conversion rate is kept as column `fx`.
 """
 import argparse
 
@@ -26,12 +26,18 @@ def main():
                 p.unlink()  # no USD reference for that day: drop it rather than mix units
                 continue
             b = pd.read_parquet(p)
-            if b.attrs.get("quote") == "USD" or "usd_converted" in b.columns:
-                continue
             px = pd.read_parquet(ref, columns=["mid"])["mid"].reindex(b.index).ffill().bfill().to_numpy()
+            if "usd_converted" in b.columns:
+                if "fx" not in b.columns:  # files converted before the fx column existed
+                    b["fx"] = px
+                    b.to_parquet(p, compression="zstd")
+                continue
             b["notional"] *= px
             b["sn"] *= px
             b["ssqrt_usd"] *= np.sqrt(px)
+            # USD per unit of the quote currency; markout.py needs it to put
+            # sn (now USD) and mid * sv (still in the quote currency) in the same units
+            b["fx"] = px
             b["usd_converted"] = True
             b.to_parquet(p, compression="zstd")
             n += 1
