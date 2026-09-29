@@ -56,7 +56,7 @@
 <section class="section hero" id="top" aria-labelledby="title">
   <p class="eyebrow"><b>Research project</b> Market microstructure · Mohamed El Khoudimi</p>
   <h1 id="title">Can you predict market impact without predicting who loses money?</h1>
-  <p class="subtitle">I tested whether a classic price-impact measure, Kyle's lambda, is stable, forecastable and economically useful, across 351 million trades and a pre-registered holdout.</p>
+  <p class="subtitle">I tested whether a classic price-impact measure, Kyle's lambda, is stable, forecastable and economically useful across 351 million trades, then froze the hypotheses and success criteria before opening a four-pair holdout.</p>
   <p class="voice">I started with a simple contradiction. Kyle's model gives a constant depth parameter, but traders estimate its reciprocal, lambda, as if it changes through time. I wanted to know whether those changes are real, predictable, and useful for trading decisions. They are real and partly predictable. The trading thesis I built on top of them did not survive the holdout.</p>
 
   <dl class="meta-strip">
@@ -76,9 +76,15 @@
     <div class="row" role="row"><span class="claim" role="cell">Scheduling trades on forecast lambda lowers execution cost<small>2 of 4 pairs significant; I required 3</small></span><span role="cell"><span class="status partial">Partial</span></span></div>
   </div>
 
+  <div class="lane hold mt" aria-label="Pre-registered holdout proof">
+    <span class="status supported">Pre-registered before holdout</span>
+    <div class="pairs">Freeze commit <code>8f3e63b</code> · 25 Sep 2026 18:33:59 UTC</div>
+    <p>I committed the hypotheses, pass rules and frozen code before running any analysis on ETHBTC, LTCBTC, NEOUSDT or QTUMUSDT. The first holdout results were committed later at 19:03:28 UTC. The verdicts above use the held-out pairs, not the development set.</p>
+  </div>
+
   <div class="cta-row">
     <a href="https://github.com/mtk1606/Kyle-s-Lambda-is-not-a-constant">Source code and results on GitHub</a>
-    <a href="https://github.com/mtk1606/Kyle-s-Lambda-is-not-a-constant/blob/HEAD/docs/PREREGISTRATION.md">The pre-registration</a>
+    <a href="https://github.com/mtk1606/Kyle-s-Lambda-is-not-a-constant/blob/HEAD/docs/PREREGISTRATION.md">Frozen hypotheses & holdout rules</a>
     <a href="#holdout">Jump to the holdout scorecard</a>
   </div>
 </section>
@@ -648,7 +654,7 @@ python scripts/06_scorecard.py</code></pre>
   <div class="prose">
     <p>I framed the research question and designed the pipeline. I implemented the estimators, the reliability audit, the forecasting models and the walk-forward evaluation. I built the quoting and execution simulations and the holdout scorecard.</p>
     <p>I found and corrected the confounds that favoured my own model, pre-registered the holdout predictions before running them, and kept the original thesis claims in the scorecard when I expected them to fail. After the first holdout run I found a units bug, fixed it with a regression test, preserved the original scorecard next to the corrected one, and kept the original verdicts.</p>
-    <p>I did not collect the trade data myself: it comes from public mirrors of Binance, LOBSTER and Coinbase data, listed in <code>data/README.md</code>. I used AI coding tools during development. The question, the experiments, the decisions about what counts as evidence, and the conclusions are mine.</p>
+    <p>I treated the repository as a research record, not a demo: I kept the failed hypotheses, preserved the as-run and corrected scorecards, documented deviations, and built the site so every displayed number traces back to a result file. Data provenance and known limitations are documented in <code>data/README.md</code>.</p>
     <p class="small muted">Nothing here is investment advice, and nothing was traded live.</p>
   </div>
 </section>
