@@ -1,0 +1,19 @@
+{
+  "name": "kyle-lambda-site",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Research site for Kyle's Lambda Is Not a Constant",
+  "scripts": {
+    "data": "cd .. && python site/scripts/export_site_data.py",
+    "dev": "vite",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "verify": "cd .. && python site/scripts/verify_claims.py"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0",
+    "vite": "^6.0.0"
+  }
+}

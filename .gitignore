@@ -6,3 +6,5 @@ data/*
 !data/README.md
 distribution/private/
 .venv/
+site/node_modules/
+site/dist/

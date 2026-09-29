@@ -1,0 +1,666 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kyle's Lambda Is Not a Constant</title>
+<meta name="description" content="I tested whether a classic price-impact measure is stable, forecastable and economically useful across 351 million trades and a pre-registered holdout. I could forecast price impact. The trading thesis failed.">
+<meta name="author" content="Mohamed El Khoudimi">
+<!-- Canonical URL is a placeholder until the site is deployed; see site/README.md -->
+<link rel="canonical" href="https://mtk1606.github.io/Kyle-s-Lambda-is-not-a-constant/">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Kyle's Lambda Is Not a Constant">
+<meta property="og:description" content="I could forecast price impact. The trading thesis failed. A pre-registered study on 351M trades, by Mohamed El Khoudimi.">
+<meta property="og:url" content="https://mtk1606.github.io/Kyle-s-Lambda-is-not-a-constant/">
+<meta property="og:image" content="https://mtk1606.github.io/Kyle-s-Lambda-is-not-a-constant/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Kyle's Lambda Is Not a Constant. I could forecast price impact. The trading thesis failed. By Mohamed El Khoudimi.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Kyle's Lambda Is Not a Constant">
+<meta name="twitter:description" content="I could forecast price impact. The trading thesis failed.">
+<meta name="twitter:image" content="https://mtk1606.github.io/Kyle-s-Lambda-is-not-a-constant/og.png">
+<meta name="theme-color" content="#fbfbfa" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#121315" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="./favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&display=swap">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"ScholarlyArticle","headline":"Kyle's Lambda Is Not a Constant","author":{"@type":"Person","name":"Mohamed El Khoudimi","url":"https://github.com/mtk1606"},"about":["market microstructure","price impact","Kyle's lambda"],"codeRepository":"https://github.com/mtk1606/Kyle-s-Lambda-is-not-a-constant"}
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="#top">Kyle's λ <span>is not a constant</span></a>
+    <nav class="topnav" aria-label="Sections">
+      <a href="#idea">Idea</a>
+      <a href="#experiment">Experiment</a>
+      <a href="#audit">Noise</a>
+      <a href="#forecast">Forecast</a>
+      <a href="#surprise">Result</a>
+      <a href="#holdout">Holdout</a>
+      <a href="#corrections">Corrections</a>
+      <a href="#engineering">Engineering</a>
+      <a href="#reproduce">Reproduce</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+
+<!-- ============================================================ HERO -->
+<section class="section hero" id="top" aria-labelledby="title">
+  <p class="eyebrow"><b>Research project</b> Market microstructure · Mohamed El Khoudimi</p>
+  <h1 id="title">Can you predict market impact without predicting who loses money?</h1>
+  <p class="subtitle">I tested whether a classic price-impact measure, Kyle's lambda, is stable, forecastable and economically useful, across 351 million trades and a pre-registered holdout.</p>
+  <p class="voice">I started with a simple contradiction. Kyle's model gives a constant depth parameter, but traders estimate its reciprocal, lambda, as if it changes through time. I wanted to know whether those changes are real, predictable, and useful for trading decisions. They are real and partly predictable. The trading thesis I built on top of them did not survive the holdout.</p>
+
+  <dl class="meta-strip">
+    <div><dt>Data</dt><dd><span class="num">351M</span> raw trades, Apr 2018 to Nov 2019</dd></div>
+    <div><dt>Markets</dt><dd>6 Binance spot pairs · 1 Nasdaq day (AMZN) · ~11 h Coinbase L3</dd></div>
+    <div><dt>Design</dt><dd>2 development pairs, 4 held-out pairs, predictions committed before the holdout ran</dd></div>
+    <div><dt>Primary result</dt><dd>Lambda is forecastable. Forecast lambda does not predict maker losses.</dd></div>
+    <div><dt>Status</dt><dd>Research complete. Nothing deployed or traded live.</dd></div>
+  </dl>
+
+  <div class="verdicts" role="table" aria-label="Summary of results on the four held-out pairs">
+    <div class="cap" role="row"><span role="columnheader">The 30-second version · verdicts on the 4 held-out pairs</span></div>
+    <div class="row" role="row"><span class="claim" role="cell">Lambda is not constant through the day<small>Constancy rejected far more often than chance on 3 of 4 pairs</small></span><span role="cell"><span class="status supported">Supported</span></span></div>
+    <div class="row" role="row"><span class="claim" role="cell">Lambda can be forecast from the past<small>Beats seasonality and a tuned trailing estimate on 4 of 4 pairs</small></span><span role="cell"><span class="status supported">Supported</span></span></div>
+    <div class="row" role="row"><span class="claim" role="cell">Forecast lambda predicts which passive fills lose money<small>0 of 4 pairs</small></span><span role="cell"><span class="status not">Not supported</span></span></div>
+    <div class="row" role="row"><span class="claim" role="cell">Quoting on forecast lambda beats quoting on trailing lambda<small>0 of 4 pairs</small></span><span role="cell"><span class="status not">Not supported</span></span></div>
+    <div class="row" role="row"><span class="claim" role="cell">Scheduling trades on forecast lambda lowers execution cost<small>2 of 4 pairs significant; I required 3</small></span><span role="cell"><span class="status partial">Partial</span></span></div>
+  </div>
+
+  <div class="cta-row">
+    <a href="https://github.com/mtk1606/Kyle-s-Lambda-is-not-a-constant">Source code and results on GitHub</a>
+    <a href="https://github.com/mtk1606/Kyle-s-Lambda-is-not-a-constant/blob/HEAD/docs/PREREGISTRATION.md">The pre-registration</a>
+    <a href="#holdout">Jump to the holdout scorecard</a>
+  </div>
+</section>
+
+<!-- ============================================================ IDEA -->
+<section class="section" id="idea" aria-labelledby="idea-h">
+  <div class="section-head">
+    <p class="eyebrow">What lambda measures</p>
+    <h2 id="idea-h">How far does price move when someone pushes on the market?</h2>
+  </div>
+  <div class="two-col">
+    <div class="prose">
+      <p>Every trade that crosses the spread is a push. A buyer who needs to buy now takes the cheapest offers, then the next ones, and the price moves up. How far it moves depends on how much is resting in the book.</p>
+      <p>In a deep market, a large push barely moves the price. In a thin market, a small push moves it a lot. <strong>Lambda is that sensitivity: how many basis points the price moves per dollar of net buying or selling.</strong></p>
+      <p>It matters because it is the cost of trading. A fund that has to buy $1M pays more when lambda is high. A market maker who sells to that buyer loses more if the price keeps moving. Desks estimate lambda every day for exactly these reasons.</p>
+      <details class="deep">
+        <summary>How I estimate it <span class="for">for technical readers</span></summary>
+        <div class="body">
+          <p>Within a window (say 5 minutes), I cut time into 1-second bars and regress the mid-price return on signed order flow:</p>
+          <pre class="eq">r_i = a + λ · x_i + e_i        i = 1-second bars in the window
+r_i  mid-price return, bps
+x_i  signed flow: buyer-initiated $ minus seller-initiated $, in $M
+λ    bps of price move per $1M of net flow</pre>
+          <p>A marketable order that sweeps several resting orders prints several trades, so I first collapse fills into parent orders by taker order id. I use a bounce-corrected mid (the Binance tape has no quotes), because regressing raw trade prices on flow counts part of the bid-ask spread as "impact". I also estimate the square-root form of Hasbrouck (2009), an order-count version, and, where a book exists, the order-flow-imbalance slope of Cont, Kukanov and Stoikov (2014).</p>
+        </div>
+      </details>
+    </div>
+    <figure class="figure" aria-labelledby="impact-h">
+      <div class="figure-head"><p class="figure-title" id="impact-h">Same push, two markets</p><span class="status dev">Illustration</span></div>
+      <div class="impact-demo" data-widget="impact">
+        <div class="impact-control">
+          <label for="flow">Net buying pressure <output id="flow-out" for="flow">+$0.50M</output></label>
+          <input id="flow" type="range" min="-1" max="1" step="0.05" value="0.5" aria-describedby="impact-note">
+        </div>
+        <div class="chart" data-chart="impact" aria-hidden="true"></div>
+        <div class="impact-panels">
+          <div class="impact-panel"><h3>Deep market · λ = 20</h3><span class="big" id="deep-move">+10.0 bps</span><p>Lots resting at each price. The push is absorbed.</p></div>
+          <div class="impact-panel"><h3>Thin market · λ = 80</h3><span class="big" id="thin-move">+40.0 bps</span><p>Little resting. The same push walks the price.</p></div>
+        </div>
+      </div>
+      <figcaption id="impact-note">Illustrative numbers, not live data. λ in bps per $1M of net flow. For scale: the median 5-minute estimate on BTCUSDT in my sample was <span class="num">44.2</span> bps per $1M. Higher lambda means more price impact per unit of flow.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ============================================================ CONTRADICTION -->
+<section class="section" id="contradiction" aria-labelledby="contra-h">
+  <div class="section-head">
+    <p class="eyebrow">The contradiction</p>
+    <h2 id="contra-h">The model says depth is constant. Desks treat it as moving.</h2>
+  </div>
+  <div class="two-col">
+    <div class="prose">
+      <p>Kyle (1985) models one informed trader, noise traders who trade for their own reasons, and market makers who set prices so that they break even. As trading becomes continuous, the equilibrium lambda goes flat. Depth is constant through the session.</p>
+      <p>Practitioners estimate lambda as a rolling regression and let it move. Both cannot be literally right, and the rolling estimate is itself noisy. So I asked whether the movement you see in a rolling lambda is mostly estimation noise, or whether it contains structure you can predict.</p>
+      <p>I don't read the answer as "Kyle was wrong". The constant-depth equilibrium is too restrictive as a literal description of intraday data. Its logic about who sets lambda, and why, turned out to explain my negative result.</p>
+    </div>
+    <figure class="figure">
+      <div class="figure-head"><p class="figure-title">Kyle's equilibrium λ, solved numerically</p><span class="status supported">Verified by tests</span></div>
+      <div class="chart" data-chart="kyle" role="img" aria-label="Equilibrium lambda across the trading period for 4, 20 and 200 auctions. With more auctions, lambda flattens toward sigma v over sigma u, except near the close."></div>
+      <ul class="legend"><li><span class="swatch" style="background:var(--series-3)"></span>4 auctions</li><li><span class="swatch" style="background:var(--series-2)"></span>20 auctions</li><li><span class="swatch" style="background:var(--accent)"></span>200 auctions</li></ul>
+      <figcaption>From my solver in <code>kyle.py</code>. Tests check it against the closed forms: one auction gives λ = σ<sub>v</sub>/(2σ<sub>u</sub>); with 400 auctions the interior is flat to within 1%.</figcaption>
+    </figure>
+  </div>
+
+  <figure class="figure mt" aria-labelledby="day-h">
+    <div class="figure-head">
+      <p class="figure-title" id="day-h">One real day: BTCUSDT, 26 October 2019 (UTC)</p>
+      <div class="seg" role="group" aria-label="Layers">
+        <button type="button" aria-pressed="true" data-layer="forecast">Forecast</button>
+        <button type="button" aria-pressed="true" data-layer="band">Shading</button>
+      </div>
+    </div>
+    <div class="chart" data-chart="day" role="img" aria-label="Five-minute lambda estimates scatter widely around a forecast line that moves between about 20 and 45 bps per million dollars, while the Kyle constant stays flat at about 29."></div>
+    <ul class="legend">
+      <li><span class="swatch dot" style="background:var(--series-muted)"></span>5-minute estimate (about 57% noise)</li>
+      <li><span class="swatch dash"></span>Constant: trailing 7-day median</li>
+      <li><span class="swatch" style="background:var(--accent)"></span>My forecast, made 5 minutes ahead</li>
+      <li><span class="swatch band" style="background:var(--accent-soft)"></span>Predictable deviation from the constant</li>
+    </ul>
+    <figcaption>Real data. The day was picked by a fixed rule (the 2019 day with the largest realized variance and no missing windows), not by eye. The forecasts are out of sample: each comes from a model trained only on earlier months.</figcaption>
+  </figure>
+</section>
+
+<!-- ============================================================ QUESTIONS -->
+<section class="section" id="questions" aria-labelledby="q-h">
+  <div class="section-head">
+    <p class="eyebrow">Three questions, each harder than the last</p>
+    <h2 id="q-h">A forecast can be statistically right and economically useless.</h2>
+  </div>
+  <ol class="questions">
+    <li><div><div class="q">Is lambda stable enough to estimate at all?</div><p>If a 5-minute estimate is mostly noise, reacting to it is reacting to noise.</p><div class="difficulty" aria-label="Difficulty 1 of 3"><i class="on"></i><i></i><i></i><span>measurement</span></div></div></li>
+    <li><div><div class="q">Can next-window lambda be forecast from the past?</div><p>And is that anything more than the time-of-day pattern everyone already knows about?</p><div class="difficulty" aria-label="Difficulty 2 of 3"><i class="on"></i><i class="on"></i><i></i><span>prediction</span></div></div></li>
+    <li><div><div class="q">If I can forecast it, does that tell me who is about to lose money, or how to trade more cheaply?</div><p>This is the question a trading desk cares about. It needs the forecast to line up with a separate outcome, adverse selection or execution cost, on data I had not looked at.</p><div class="difficulty" aria-label="Difficulty 3 of 3"><i class="on"></i><i class="on"></i><i class="on"></i><span>economic value</span></div></div></li>
+  </ol>
+</section>
+
+<!-- ============================================================ DATA + EXPERIMENT -->
+<section class="section" id="experiment" aria-labelledby="exp-h">
+  <div class="section-head">
+    <p class="eyebrow">Data and design</p>
+    <h2 id="exp-h">I designed on two pairs, then tested on four I had not analysed.</h2>
+    <p class="lede">A holdout is data I deliberately refused to analyse until I had frozen the code and written down what would count as success.</p>
+  </div>
+
+  <div class="lanes">
+    <div class="lane dev">
+      <span class="status dev">Development</span>
+      <div class="pairs">BTCUSDT · BNBUSDT</div>
+      <p>Binance spot, raw trades with buyer and seller order ids, 2018-04-06 to 2019-11-17. Every design decision was made here.</p>
+    </div>
+    <div class="lane hold">
+      <span class="status supported">Holdout</span>
+      <div class="pairs">ETHBTC · LTCBTC · NEOUSDT · QTUMUSDT</div>
+      <p>Same exchange and period. Bars were built before the freeze; no analysis ran until the predictions were committed.</p>
+    </div>
+    <div class="lane cross">
+      <span class="status dev">Cross-venue</span>
+      <div class="pairs">AMZN (Nasdaq) · Coinbase L3</div>
+      <p>One LOBSTER day of AMZN (2012-06-21, 6.5 h). Coinbase BTC-USDT and ETH-USDT order-by-order samples, about 11 h together. Supporting evidence only.</p>
+    </div>
+  </div>
+
+  <figure class="figure mt" aria-labelledby="pipe-h">
+    <p class="figure-title" id="pipe-h">The pipeline</p>
+    <div class="pipeline">
+      <div class="pipe-row">
+        <span class="pipe-step">Raw trades<small>351M prints</small></span><span class="pipe-arrow" aria-hidden="true">→</span>
+        <span class="pipe-step">Signed order flow<small>fills → parent orders</small></span><span class="pipe-arrow" aria-hidden="true">→</span>
+        <span class="pipe-step">Rolling λ estimator<small>1 s bars, 1 min to 1 day windows</small></span><span class="pipe-arrow" aria-hidden="true">→</span>
+        <span class="pipe-step">Reliability audit<small>Phase 1</small></span><span class="pipe-arrow" aria-hidden="true">→</span>
+        <span class="pipe-step">Conditional forecast<small>Phase 2, walk-forward</small></span>
+      </div>
+      <div class="pipe-row">
+        <span class="pipe-arrow" aria-hidden="true">→</span>
+        <span class="pipe-step">Freeze + commit predictions<small><code>8f3e63b</code></small></span><span class="pipe-arrow" aria-hidden="true">→</span>
+        <span class="pipe-step">Adverse-selection test<small>Phase 3</small></span><span class="pipe-arrow" aria-hidden="true">→</span>
+        <span class="pipe-step">Quote-gating test<small>Phase 4a</small></span><span class="pipe-arrow" aria-hidden="true">→</span>
+        <span class="pipe-step">Execution test<small>Phase 4b</small></span><span class="pipe-arrow" aria-hidden="true">→</span>
+        <span class="pipe-step">Holdout scorecard<small>7 predictions × 4 pairs</small></span>
+      </div>
+    </div>
+    <figcaption>The same code ran on the development pairs first and then, unchanged, on the holdout pairs. The book-level venues ran through the same estimators with their own loaders.</figcaption>
+  </figure>
+
+  <details class="deep mt">
+    <summary>Data handling I had to get right <span class="for">for technical readers</span></summary>
+    <div class="body">
+      <p><strong>Trade sign.</strong> Binance's <code>isBuyerMaker = true</code> means the aggressor sold. I checked the sign empirically: signed flow and returns correlate positively, and the estimated lambdas are positive on every pair.</p>
+      <p><strong>Outages.</strong> Seconds inside any gap longer than 300 s are masked, and windows more than 20% masked are dropped. On the thinnest holdout pairs this also removes genuinely quiet periods. I note that as a limitation.</p>
+      <p><strong>File dates.</strong> The mirror's file names are shifted a day from the UTC timestamps inside, so I key everything off timestamps.</p>
+      <p><strong>Units.</strong> ETHBTC and LTCBTC are quoted in BTC. I convert flow to USD with the BTCUSDT mid of the same second, so lambda is in bps per $1M everywhere. That conversion is where my post-holdout bug lived (<a href="#bug">below</a>).</p>
+    </div>
+  </details>
+</section>
+
+<!-- ============================================================ PHASE 1 -->
+<section class="section" id="audit" aria-labelledby="audit-h">
+  <div class="section-head">
+    <p class="eyebrow"><b>Phase 1</b> Estimator audit</p>
+    <h2 id="audit-h">A 5-minute rolling lambda on BTCUSDT is about 57% noise.</h2>
+    <p class="lede">If I take the latest 5-minute estimate and treat it as truth, most of what I am reacting to is estimation noise. One window's standard error is about the size of the estimate itself.</p>
+  </div>
+  <div class="two-col">
+    <figure class="figure" aria-labelledby="rel-h">
+      <div class="figure-head">
+        <p class="figure-title" id="rel-h">Share of a rolling λ's variation that is real</p>
+        <div class="seg" role="group" aria-label="Estimator">
+          <button type="button" aria-pressed="true" data-est="kyle_usd">Kyle λ</button>
+          <button type="button" aria-pressed="false" data-est="sqrt_usd">√-flow λ</button>
+        </div>
+      </div>
+      <div class="chart" data-chart="reliability" role="img" aria-label="Reliability rises with window length, from 0.28 at 1 minute to 0.93 at 1 day for Kyle lambda on BTCUSDT."></div>
+      <figcaption>BTCUSDT, 1-second bars, 591 days. Split-half reliability: each window is estimated twice from interleaved bars, and the agreement between the two halves is the share of variance that is real.</figcaption>
+    </figure>
+    <div class="stack">
+      <div class="kpis">
+        <div><div class="v num">0.43</div><div class="k">reliability at 5 minutes (57% noise)</div></div>
+        <div><div class="v num">0.69</div><div class="k">reliability at 1 hour</div></div>
+        <div><div class="v num">5.4%</div><div class="k">of 5-minute estimates have the wrong sign</div></div>
+      </div>
+      <div class="prose">
+        <p><strong>Is lambda constant within a day?</strong> I tested "one lambda for all 24 hours" on every day with a permutation test. If lambda were constant, about 1% of days would reject at the 1% level.</p>
+        <p>On the development pairs, 27% to 53% of days rejected, depending on pair and estimator. On the holdout pairs, 7% to 31% did (Kyle estimator). The AMZN day rejected as well (p = 0.001).</p>
+        <p>So lambda moves. On many days, though, an hourly lambda is still within sampling noise of the day's constant. The variation is real, frequent and moderate.</p>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <caption class="sr-only">Share of days rejecting constant intraday lambda at the 1% level</caption>
+          <thead><tr><th>Pair</th><th>Set</th><th class="r">Days rejecting at 1%</th><th class="r">5-min rel.</th></tr></thead>
+          <tbody data-table="constancy"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <details class="deep mt">
+    <summary>Method details <span class="for">split-half reliability and the permutation test</span></summary>
+    <div class="body">
+      <p>For every window I estimate λ from its odd bars and from its even bars. Across windows, <code>corr(λ_odd, λ_even)</code> is the share of variance the halves share, which is the true λ. Spearman-Brown turns it into the reliability of the full-window estimate, <code>ρ = 2r / (1 + r)</code>. Estimates are winsorized at the 1st and 99th percentiles first, because order flow is fat-tailed. On synthetic markets with a known λ path, the method recovers the true reliability to within 0.06 (<code>tests/test_estimators.py</code>).</p>
+      <p>The constancy test shuffles the hour labels of 10-second bars within a day and compares the precision-weighted dispersion of hourly slopes against 199 shuffles. A test on synthetic data with heteroskedastic noise checks that it rejects at close to its nominal rate when λ really is constant.</p>
+      <p>Full grid: 4 estimators × 4 bar sizes × 6 window lengths × regime splits, in <a href="https://github.com/mtk1606/Kyle-s-Lambda-is-not-a-constant/blob/HEAD/results/phase1_reliability.csv"><code>results/phase1_reliability.csv</code></a>.</p>
+    </div>
+  </details>
+</section>
+
+<!-- ============================================================ PHASE 2 -->
+<section class="section" id="forecast" aria-labelledby="fc-h">
+  <div class="section-head">
+    <p class="eyebrow"><b>Phase 2</b> Forecastability</p>
+    <h2 id="fc-h">Lambda is forecastable, and not only from the time of day.</h2>
+    <p class="lede">On BTCUSDT 5-minute windows my conditional model explains 9.9% of next-window variation, against 7.9% for the best trailing estimate I could tune and 5.1% for the intraday pattern alone. Diebold-Mariano t-statistics are about 20.</p>
+  </div>
+  <div class="two-col">
+    <figure class="figure" aria-labelledby="hz-h">
+      <div class="figure-head">
+        <p class="figure-title" id="hz-h">Out-of-sample R² vs Kyle's constant, by horizon</p>
+        <div class="seg" role="group" aria-label="Pair">
+          <button type="button" aria-pressed="true" data-pair="BTCUSDT">BTCUSDT</button>
+          <button type="button" aria-pressed="false" data-pair="BNBUSDT">BNBUSDT</button>
+        </div>
+      </div>
+      <div class="chart" data-chart="horizons" role="img" aria-label="R squared by forecast horizon. The conditional model stays above the calibrated trailing and seasonal baselines from 5 minutes to 2 hours."></div>
+      <ul class="legend">
+        <li><span class="swatch" style="background:var(--accent)"></span>Conditional (HAR)</li>
+        <li><span class="swatch" style="background:var(--series-2)"></span>Trailing λ, tuned and calibrated</li>
+        <li><span class="swatch" style="background:var(--series-3)"></span>Time-of-day pattern, calibrated</li>
+      </ul>
+      <figcaption>Development pairs. R² here is small in absolute terms, and that is expected: the target is itself 57% noise, so the ceiling for any forecast is about 43%. Read it as an improvement over fair baselines.</figcaption>
+    </figure>
+    <div class="stack">
+      <div class="prose">
+        <p><strong>The raw rolling estimate does worse than assuming a constant.</strong> Using the last 5-minute estimate as the forecast gives R² = −64% on BTCUSDT. If you plug a 5-minute lambda straight into a cost model, you are better off using the weekly median.</p>
+        <p><strong>The forecast tracks what actually happens next.</strong> I also score it by information coefficient (IC): the rank correlation, within each day, between the forecast and the next window's realized lambda. Higher forecasts line up with higher realized lambda on every pair, IC 0.10 to 0.17 on the holdout. Trailing lambda manages at most 0.05, and it is negative on three holdout pairs.</p>
+        <p><span class="status supported">Holdout verified</span> The conditional model beat both calibrated baselines with Diebold-Mariano t above 2 on all four held-out pairs.</p>
+      </div>
+      <details class="deep">
+        <summary>Model and evaluation <span class="for">HAR, walk-forward, baselines, DM test</span></summary>
+        <div class="body">
+          <p><strong>Target.</strong> The window's λ estimate divided by its trailing 7-day median, so 1.0 means "usual" and Kyle's constant is the zero-skill benchmark.</p>
+          <p><strong>Model.</strong> OLS with a small ridge penalty on HAR-style lags of λ (the last window, and means over about 30 min, 2 h, 6 h and 1 day), the seasonal term, the other two estimators, and lagged market state: realized variance, volume, order count, spread, order-flow imbalance, absolute return, a weekend flag.</p>
+          <p><strong>Walk-forward.</strong> Refit monthly on all earlier data with a one-day embargo; 60-day burn-in. Winsorization bounds come from training data only. A test scrambles the future and checks that no earlier forecast changes.</p>
+          <p><strong>Fair baselines.</strong> The trailing EWMA gets its half-life tuned in-sample; both it and the seasonal profile are then linearly calibrated on the same training rows, and all forecasts are clipped to the same bounds.</p>
+          <p><strong>Inference.</strong> Diebold-Mariano on squared error with Newey-West variance. Across every window length, horizon, estimator and development pair (60 configurations), DM against the seasonal model ranges from 3.7 to 60; against the trailing model it is above 3 in 58 of 60.</p>
+        </div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ CENTRAL SURPRISE -->
+<section class="section" id="surprise" aria-labelledby="sur-h">
+  <div class="section-head">
+    <p class="eyebrow">The central result</p>
+    <h2 id="sur-h">I could predict lambda. I could not predict maker adverse selection with it.</h2>
+  </div>
+  <div class="matrix" role="list">
+    <div role="listitem"><span class="status supported">Supported</span><div class="ask">Forecasts next-window lambda</div><div class="ev">IC 0.10 to 0.17 on the 4 held-out pairs, well above trailing lambda.</div></div>
+    <div role="listitem"><span class="status not">Not supported</span><div class="ask">Forecasts maker adverse selection</div><div class="ev">0 of 4 held-out pairs. Trailing volatility does it better on all 6.</div></div>
+    <div role="listitem"><span class="status not">Not supported</span><div class="ask">Improves quote gating</div><div class="ev">0 of 4 held-out pairs. Knowing the realized lambda does not help either.</div></div>
+    <div role="listitem"><span class="status partial">Partial</span><div class="ask">Lowers execution cost</div><div class="ev">Significant on 2 of 4 held-out pairs. I had required 3.</div></div>
+  </div>
+  <p class="pull">The statistical result survived. The trading thesis did not.</p>
+</section>
+
+<!-- ============================================================ PHASE 3 -->
+<section class="section" id="adverse" aria-labelledby="as-h">
+  <div class="section-head">
+    <p class="eyebrow"><b>Phase 3</b> Adverse selection</p>
+    <h2 id="as-h">Forecast lambda did not tell me which passive fills would lose money.</h2>
+    <p class="lede">My original thesis: if lambda reflects the market maker's fear of informed traders, then a high forecast should flag the windows where passive orders get picked off. On all four held-out pairs, it did not, in the direction I pre-registered. Trailing volatility did, on every pair (IC 0.08 to 0.12, t above 16).</p>
+  </div>
+  <figure class="figure" aria-labelledby="ic-h">
+    <p class="figure-title" id="ic-h">What each signal predicts, next 5-minute window (mean daily rank IC)</p>
+    <div class="chart" data-chart="ic" role="img" aria-label="For every pair, forecast lambda has a clearly positive IC with realized lambda, while its IC with maker adverse selection sits near or below zero. Trailing volatility has a positive IC with adverse selection on every pair."></div>
+    <ul class="legend">
+      <li><span class="swatch dot" style="background:var(--accent)"></span>Forecast λ → realized λ</li>
+      <li><span class="swatch dot" style="background:var(--series-muted)"></span>Trailing λ → realized λ</li>
+      <li><span class="swatch dot" style="background:var(--series-2)"></span>Forecast λ → maker adverse selection</li>
+      <li><span class="swatch dot" style="background:var(--series-3)"></span>Trailing volatility → maker adverse selection</li>
+    </ul>
+    <figcaption>Adverse selection is the price move against a passive fill over the next 60 seconds, notional-weighted per window. IC is computed within each day so that a volatile day, with high lambda and large losses, cannot fake the result. The development pairs are shown for completeness; the verdict uses only the four held-out pairs.</figcaption>
+  </figure>
+  <div class="two-col mt">
+    <div class="prose">
+      <h3>My interpretation</h3>
+      <p>In this data, lambda is highest in thin windows, and thin windows are not where passive fills lose the most per dollar. The losses concentrate in busy, volatile windows where flow keeps arriving in one direction.</p>
+      <p>This also fits Kyle's own logic. Lambda is the market maker's price for adverse selection. If makers set it well, it should price the risk instead of predicting who gets hurt. That is an interpretation from one exchange and one period, not a general law.</p>
+    </div>
+    <div class="prose">
+      <h3><span class="status exploratory">Exploratory</span></h3>
+      <p>Two observations came after I had seen the development results, so I don't treat them as findings. First, on the development pairs, higher forecast lambda went with slightly <em>better</em> maker realized spreads, as if makers over-widen in thin windows. Second, the reversed quoting rule (step away when lambda is low) helped on BTCUSDT and hurt on BNBUSDT. Neither was tested on the holdout.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ PHASE 4a -->
+<section class="section" id="quoting" aria-labelledby="qt-h">
+  <div class="section-head">
+    <p class="eyebrow"><b>Phase 4a</b> Quote gating</p>
+    <h2 id="qt-h">Knowing the next window's realized lambda did not rescue the quoting rule.</h2>
+    <p class="lede">I simulated a passive liquidity provider that steps away from the 20% of windows with the highest lambda score. Using my forecast as the score did not beat using trailing lambda. Then I gave the rule the answer: the realized lambda of the next window. It still did worse than quoting all the time, on 5 of 6 pairs.</p>
+  </div>
+  <div class="two-col">
+    <figure class="figure" aria-labelledby="qt-fig">
+      <p class="figure-title" id="qt-fig">Maker net edge vs always quoting, bps per $ traded</p>
+      <div class="chart" data-chart="quoting" role="img" aria-label="For each pair, the change in maker edge from gating on trailing lambda, forecast lambda and realized lambda, relative to always quoting. The realized-lambda oracle is below zero on five of six pairs."></div>
+      <ul class="legend">
+        <li><span class="swatch dot" style="background:var(--series-2)"></span>Gate on trailing λ</li>
+        <li><span class="swatch dot" style="background:var(--accent)"></span>Gate on forecast λ</li>
+        <li><span class="swatch dot" style="background:var(--series-muted)"></span>Gate on realized λ (oracle)</li>
+      </ul>
+      <figcaption>Zero is always quoting. Edge is half-spread earned minus adverse selection at 60 s, fee 0; every gate is active on the same share of windows. The exception to the oracle result is QTUMUSDT, the thinnest pair.</figcaption>
+    </figure>
+    <div class="prose">
+      <p>The oracle result matters because it rules out the easy excuse. If the rule had failed only with my forecast, I could blame forecast accuracy. It fails with perfect knowledge of lambda too, so the premise is wrong: in this data, avoiding high-lambda windows is not how a maker avoids losses.</p>
+      <p><strong>On the held-out pairs</strong>, the forecast gate minus the trailing gate was not positive with a confidence interval above zero on any pair. On LTCBTC it was significantly worse (−0.043 bps, 95% CI −0.083 to −0.003).</p>
+      <details class="deep">
+        <summary>Simulation setup <span class="for">and its limits</span></summary>
+        <div class="body">
+          <p>The provider takes a fixed 1% share of all maker fills in the windows where it quotes. The threshold is the trailing 7-day quantile of each score, so every gate is active on the same share of windows. Net edge per dollar is half-spread minus κ × adverse selection at the hedge horizon τ, minus fee. Grid: fee −0.5 / 0 / +1 bp, κ 1 / 1.5, τ 10 / 60 / 300 s. Confidence intervals are day-clustered bootstrap.</p>
+          <p>The limit: it assumes my fills look like the average maker's. κ only partly corrects for queue position.</p>
+        </div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ PHASE 4b -->
+<section class="section" id="execution" aria-labelledby="ex-h">
+  <div class="section-head">
+    <p class="eyebrow"><b>Phase 4b</b> Execution</p>
+    <h2 id="ex-h">On the execution side the forecast helped on liquid pairs, but not often enough to pass my own bar.</h2>
+    <p class="lede">Lambda is the price of impact, so the forecast should be worth most to whoever has to take liquidity. A Kyle-style schedule that trades less when lambda is expected to be high saved about 1 to 2% of cost against the same schedule on trailing lambda on the most liquid pairs (8% on BNBUSDT). It was significant on BTCUSDT, BNBUSDT, ETHBTC and LTCBTC. On the held-out pairs that is 2 of 4. I had required 3 of 4, so the verdict is: promising, failed the replication criterion.</p>
+  </div>
+  <figure class="figure" aria-labelledby="ex-fig">
+    <div class="figure-head">
+      <p class="figure-title" id="ex-fig">Cost saved vs the trailing-λ schedule, 5% participation</p>
+      <span class="status partial">2 of 4 held-out pairs · 3 required</span>
+    </div>
+    <div class="chart" data-chart="execution" role="img" aria-label="Cost saving in percent with 95 percent confidence intervals. Development pairs BTCUSDT 1.1% and BNBUSDT 8.4%. Holdout pairs ETHBTC 1.9% and LTCBTC 2.0% significant, NEOUSDT 0.8% with an interval crossing zero, QTUMUSDT too thin to estimate."></div>
+    <figcaption>Bars show saving as a percent of the trailing schedule's cost; whiskers are 95% day-clustered bootstrap intervals. A pair counts toward the bar only if its whole interval is above zero. QTUMUSDT's median 5-minute window trades about $2,500, and its interval spans −53% to +222%.</figcaption>
+  </figure>
+  <div class="table-wrap mt">
+    <table>
+      <caption class="sr-only">Execution cost by schedule, 5% participation</caption>
+      <thead><tr><th>Pair</th><th>Set</th><th class="r">Forecast schedule, bps</th><th class="r">Trailing schedule, bps</th><th class="r">Difference, bps [95% CI]</th><th class="r">Saving</th><th>Counts?</th></tr></thead>
+      <tbody data-table="execution"></tbody>
+    </table>
+  </div>
+  <details class="deep mt">
+    <summary>How the schedule and its cost are defined <span class="for">and why these are upper bounds</span></summary>
+    <div class="body">
+      <p>Under Kyle's linear impact, a child order of q dollars in window w costs <code>HS_w + λ_w · q / 2</code> bps, where HS is the effective half-spread. For a fixed total, the cheapest split is q proportional to 1/λ. Every schedule uses that rule and differs only in which λ goes in: a constant (TWAP), trailing λ, the seasonal profile, or my forecast.</p>
+      <p>Base child size is a fixed share of the trailing median window volume. Each schedule's tilt is normalized by its own trailing mean, so all of them trade the same expected volume (realized volumes match within 4% on every pair except QTUMUSDT, where they differ by 9%). Costs are scored with the next window's realized λ, whose estimation noise is independent of anything the schedules saw.</p>
+      <p>The saving is measured with the same linear cost model the schedule optimizes. A live test would use real fills and a nonlinear impact model with decay, so I treat these numbers as upper bounds.</p>
+    </div>
+  </details>
+</section>
+
+<!-- ============================================================ PREREG + HOLDOUT -->
+<section class="section" id="holdout" aria-labelledby="pre-h">
+  <div class="section-head">
+    <p class="eyebrow">Pre-registration and holdout</p>
+    <h2 id="pre-h">Before I analysed the four held-out pairs, I committed the code, the hypotheses and the pass thresholds.</h2>
+    <p class="lede">Once I had seen the development results, any reframing I chose was fitted to them. The only way to find out whether my revised claims were real was to write them down and test them on data I had not analysed. I kept the two original thesis claims in the scorecard even though I expected them to fail.</p>
+  </div>
+  <div class="stack">
+    <ol class="timeline" data-timeline>
+      <li><span class="when">Development</span><span class="dot solid" aria-hidden="true"></span><div class="what"><strong>All phases on BTCUSDT and BNBUSDT</strong>Every design choice, including the execution test added after the quoting thesis failed.</div></li>
+      <li><span class="when num">25 Sep 18:33:59</span><span class="dot" aria-hidden="true"></span><div class="what"><strong>Freeze: <a href="https://github.com/mtk1606/Kyle-s-Lambda-is-not-a-constant/commit/8f3e63b0cb330e723675f79bda5ca950df0c0cdd"><code>8f3e63b</code></a></strong>Code, dev results and <code>docs/PREREGISTRATION.md</code>: 7 predictions, each with a numeric pass rule, and a 3-of-4 bar.</div></li>
+      <li><span class="when num">25 Sep 18:34:27</span><span class="dot" aria-hidden="true"></span><div class="what"><strong>Deviation: <a href="https://github.com/mtk1606/Kyle-s-Lambda-is-not-a-constant/commit/2f2869558736223fbe1bcbddaa88da1b35ce7d38"><code>2f28695</code></a></strong>A <code>.gitignore</code> pattern had left the loader modules out of the freeze. I committed them unchanged, plus an I/O fix so results merge instead of overwrite, before any holdout analysis. Logged in the pre-registration.</div></li>
+      <li><span class="when">Holdout run</span><span class="dot" aria-hidden="true"></span><div class="what"><strong>Same commands on ETHBTC, LTCBTC, NEOUSDT, QTUMUSDT</strong>Phases 1 to 4, then the scorecard script.</div></li>
+      <li><span class="when num">25 Sep 19:03:28</span><span class="dot" aria-hidden="true"></span><div class="what"><strong>Results and correction: <a href="https://github.com/mtk1606/Kyle-s-Lambda-is-not-a-constant/commit/a2b39e862c5b7c2125699d56e4c3758d93e91250"><code>a2b39e8</code></a></strong>Holdout scorecard, the units fix, and the as-run scorecard kept beside the corrected one. Times are UTC.</div></li>
+    </ol>
+    <div class="stack-sm">
+      <p class="small muted">Each prediction is scored per pair. "Holds" means it held on at least 3 of the 4 held-out pairs.</p>
+      <div class="table-wrap">
+        <table class="scorecard">
+          <caption class="sr-only">Pre-registered predictions scored on the four held-out pairs</caption>
+          <thead><tr><th>Prediction</th><th class="r">ETHBTC</th><th class="r">LTCBTC</th><th class="r">NEOUSDT</th><th class="r">QTUMUSDT</th><th>Verdict</th></tr></thead>
+          <tbody data-table="scorecard"></tbody>
+        </table>
+      </div>
+      <p class="small"><a href="https://github.com/mtk1606/Kyle-s-Lambda-is-not-a-constant/blob/HEAD/results/scorecard.csv"><code>results/scorecard.csv</code></a> · <a href="https://github.com/mtk1606/Kyle-s-Lambda-is-not-a-constant/blob/HEAD/docs/PREREGISTRATION.md"><code>docs/PREREGISTRATION.md</code></a></p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ CORRECTIONS -->
+<section class="section" id="corrections" aria-labelledby="cor-h">
+  <div class="section-head">
+    <p class="eyebrow">Corrections</p>
+    <h2 id="cor-h" >After the first holdout run I found a units bug. I fixed it, kept both scorecards, and no verdict changed.</h2>
+  </div>
+  <div class="two-col" id="bug">
+    <dl class="bug">
+      <div><dt>Symptom</dt><dd>The holdout execution numbers for ETHBTC and LTCBTC looked wrong: a half-spread of about 490 bps on a liquid pair, and execution differences of several bps with enormous intervals.</dd></div>
+      <div><dt>Root cause</dt><dd>For BTC-quoted pairs, my USD conversion rescaled signed notional but not signed base volume. The half-spread term <code>sn − mid · sv</code> then mixed dollars with bitcoin. It affected predictions P6 and P7 on those two pairs only; lambda, adverse selection and P1 to P5 never use that term.</dd></div>
+      <div><dt>What I did</dt><dd><ul><li>Kept the conversion rate as a column and applied it</li><li>Added a regression test for the converted case</li><li>Preserved the as-run scorecard next to the corrected one</li><li>Left every threshold and parameter unchanged</li><li>Logged it in the pre-registration's deviations section</li></ul></dd></div>
+      <div><dt>Outcome</dt><dd><strong>No verdict changed.</strong> P6 failed before and after. P7 moved from 1 of 4 to 2 of 4, still short of 3.</dd></div>
+    </dl>
+    <figure class="figure" aria-labelledby="bugfig-h">
+      <p class="figure-title" id="bugfig-h">As-run vs corrected, held-out pairs</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Prediction</th><th class="r">As run</th><th class="r">Corrected</th><th>Verdict</th></tr></thead>
+          <tbody data-table="bugdiff"></tbody>
+        </table>
+      </div>
+      <figcaption>Counts are held-out pairs passing, out of 4. Both files are in the repository: <a href="https://github.com/mtk1606/Kyle-s-Lambda-is-not-a-constant/blob/HEAD/results/scorecard_as_run.csv"><code>scorecard_as_run.csv</code></a> and <a href="https://github.com/mtk1606/Kyle-s-Lambda-is-not-a-constant/blob/HEAD/results/scorecard.csv"><code>scorecard.csv</code></a>.</figcaption>
+    </figure>
+  </div>
+
+  <h3 class="mt">Other corrections I made before the holdout</h3>
+  <ul class="rejected cols mt" aria-label="Corrections made during development">
+    <li><h3>Unfair baselines</h3><p>My first forecast comparison clipped and calibrated the conditional model's inputs but not the baselines' forecasts, which made the baselines look far worse than they were. I clipped and calibrated the baselines the same way and reran everything. The results on this page are the corrected ones.</p></li>
+    <li><h3>A volume confound in the execution test</h3><p>My first execution comparison let the schedules trade different total volumes. Under convex impact, whoever trades less looks cheaper. I normalized each schedule to the same expected volume before drawing any conclusion.</p></li>
+    <li><h3>The loader modules missing from the freeze</h3><p>A <code>.gitignore</code> pattern excluded them from the freeze commit. I committed them unchanged 28 seconds later, before any holdout analysis, and logged it.</p></li>
+  </ul>
+</section>
+
+<!-- ============================================================ REJECTED -->
+<section class="section" id="rejected" aria-labelledby="rej-h">
+  <div class="section-head">
+    <p class="eyebrow">What the evidence rejected</p>
+    <h2 id="rej-h">Five things I believed, or might have claimed, that the data did not support.</h2>
+  </div>
+  <ul class="rejected">
+    <li><span class="status not">Not supported</span><h3>Forecast lambda predicts maker adverse selection</h3><p>0 of 4 held-out pairs. It was my original thesis.</p></li>
+    <li><span class="status not">Not supported</span><h3>Quote gating on forecast lambda beats trailing lambda</h3><p>0 of 4 held-out pairs, and an oracle version also failed.</p></li>
+    <li><span class="status partial">Partial</span><h3>Execution savings replicate out of sample</h3><p>2 of 4 held-out pairs significant; the bar was 3. Promising, not established.</p></li>
+    <li><span class="status insufficient">Insufficient data</span><h3>Crypto L3 at scale</h3><p>The Coinbase samples have 1,588 and 734 trades. That supports no inference.</p></li>
+    <li><span class="status not">Dropped</span><h3>"Nobody has published this"</h3><p>An early framing I did not keep. Estimator noise in liquidity measures (Goyenko, Holden and Trzcinka 2009) and flow toxicity (Easley, López de Prado and O'Hara 2012) are established literatures.</p></li>
+  </ul>
+</section>
+
+<!-- ============================================================ CROSS VENUE -->
+<section class="section" id="venues" aria-labelledby="ven-h">
+  <div class="section-head">
+    <p class="eyebrow"><b>Phase 5</b> Other venues</p>
+    <h2 id="ven-h">One Nasdaq day behaves like Binance. The Coinbase samples are too thin to say anything.</h2>
+  </div>
+  <div class="stack">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Venue</th><th class="r">Trades</th><th class="r">5-min reliability: Kyle / OFI</th><th>Constant λ?</th><th>Status</th></tr></thead>
+        <tbody data-table="venues"></tbody>
+      </table>
+    </div>
+    <div class="prose">
+      <p>On the AMZN day (LOBSTER, 2012-06-21), lambda moved within the session (permutation p = 0.001) and was persistent from window to window. The order-flow-imbalance slope at the best quotes was the most reliable depth measure I tested: 0.78 at 5 minutes, against 0.57 for trade-based lambda. It is one day of one stock, so I treat it as consistent with the crypto results, not as equity evidence.</p>
+      <p>I replayed both Coinbase full-channel samples order by order: one million events each, zero crossed books, zero references to unknown orders. They are USDT-quoted pairs with very little flow, so every estimate is noise. That is a null result, not a negative one.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ ENGINEERING -->
+<section class="section" id="engineering" aria-labelledby="eng-h">
+  <div class="section-head">
+    <p class="eyebrow">Engineering</p>
+    <h2 id="eng-h">What I built</h2>
+    <p class="lede">A Python package with a script per phase. Each script writes CSVs to <code>results/</code>, and every number on this page is exported from those files.</p>
+  </div>
+  <div class="modules">
+    <div><code>data/binance.py</code><p>Reads daily trade zips straight out of a partial git clone, without a working tree. Handles truncated files and collapses fills into parent taker orders.</p></div>
+    <div><code>bars.py</code><p>One-second bars on a full 86,400-row calendar grid, with a bounce-corrected mid; resampling to any bar size.</p></div>
+    <div><code>estimators.py</code><p>Window λ by Kyle, square-root, count and OFI forms, with odd/even half-sample estimates and outage masks, vectorized with sufficient statistics.</p></div>
+    <div><code>audit.py</code><p>Split-half reliability and the permutation test of intraday constancy.</p></div>
+    <div><code>forecast.py</code><p>Seasonal, trailing and HAR forecasters; monthly walk-forward with embargo; calibrated baselines.</p></div>
+    <div><code>markout.py</code><p>Maker half-spread and adverse selection at 1 s to 300 s horizons, from per-second aggregates.</p></div>
+    <div><code>signal.py</code><p>Daily rank IC with Newey-West t-stats, and incremental regressions against trailing lambda and volatility.</p></div>
+    <div><code>policy.py</code><p>The quote-gating simulator and the Kyle-optimal execution schedules, with day-clustered bootstrap intervals.</p></div>
+    <div><code>kyle.py</code><p>A numerical solver for the Kyle (1985) sequential-auction equilibrium, plus synthetic markets with a known λ path for tests.</p></div>
+    <div><code>data/l1.py</code><p>The LOBSTER loader and an order-by-order Coinbase L3 book replay, reduced to one common bar schema.</p></div>
+    <div><code>scripts/06_scorecard.py</code><p>Scores all 7 predictions on every pair from the result files, with no manual step.</p></div>
+    <div><code>collector/ws.py</code><p>A websocket recorder for public order-flow feeds, with sequence-gap markers and reconnect. <span class="status offline">Offline only</span> Tested offline; I have never run it live, and no result on this page comes from it.</p></div>
+  </div>
+</section>
+
+<!-- ============================================================ VALIDATION -->
+<section class="section" id="validation" aria-labelledby="val-h">
+  <div class="section-head">
+    <p class="eyebrow">Correctness</p>
+    <h2 id="val-h">What protects the result, and what each check guards against</h2>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Check</th><th>Guards against</th></tr></thead>
+      <tbody>
+        <tr><th scope="row"><span class="num" data-bind="tests">21</span> automated tests pass</th><td>Errors in the parts every result depends on. Details in the rows below.</td></tr>
+        <tr><th scope="row">Kyle closed-form tests</th><td>A solver that looks plausible but is wrong: one auction must give λ = σ<sub>v</sub>/(2σ<sub>u</sub>) exactly.</td></tr>
+        <tr><th scope="row">Estimator recovery on synthetic markets</th><td>A reliability measure that reports noise as signal, or signal as noise, when the true λ path is known.</td></tr>
+        <tr><th scope="row">Permutation-test size and power</th><td>A constancy test that rejects too often under heteroskedastic noise, which would overstate "lambda moves".</td></tr>
+        <tr><th scope="row">No-look-ahead tests</th><td>Forecasts or gating thresholds that change when future data changes.</td></tr>
+        <tr><th scope="row">Execution sanity tests</th><td>A schedule that differs from TWAP when every score is flat, or tilting on a useless score that comes out looking free.</td></tr>
+        <tr><th scope="row">Units regression test</th><td>The post-holdout bug coming back for USD-converted pairs.</td></tr>
+        <tr><th scope="row">Frozen commit before holdout</th><td>Moving the goalposts after seeing the answer.</td></tr>
+        <tr><th scope="row">As-run and corrected scorecards kept</th><td>A quiet fix that changes a verdict without anyone seeing it.</td></tr>
+        <tr><th scope="row">Calibrated, clipped baselines</th><td>A model that looks good only because its competitors were handicapped.</td></tr>
+        <tr><th scope="row">Scripted scorecard and site data</th><td>Transcription errors between the results and what this page says. Every chart value is exported from <code>results/</code>.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============================================================ EVIDENCE BOUNDARY -->
+<section class="section" id="boundary" aria-labelledby="bnd-h">
+  <div class="section-head">
+    <p class="eyebrow">Evidence boundary</p>
+    <h2 id="bnd-h">How much weight each claim can carry</h2>
+  </div>
+  <div class="legend-block">
+    <div><span class="status supported">Holdout verified</span><p>Passed the pre-registered rule on at least 3 of 4 held-out pairs: λ moves within the day, rolling λ is noisy, λ is forecastable, forecast beats trailing λ at predicting λ.</p></div>
+    <div><span class="status not">Not supported</span><p>Failed the pre-registered rule: forecast λ predicts adverse selection; forecast-gated quoting beats trailing-gated quoting.</p></div>
+    <div><span class="status partial">Partial</span><p>Right direction, not enough replication: execution savings (significant on 4 of 6 pairs overall, 2 of 4 held out).</p></div>
+    <div><span class="status dev">Development only</span><p>Measured only on BTCUSDT and BNBUSDT: R² by horizon beyond one window, the bar-size and regime breakdowns, the estimator comparison at every window length.</p></div>
+    <div><span class="status exploratory">Exploratory</span><p>Noticed after seeing results and never tested out of sample: makers over-widening in thin windows; the reversed quoting rule.</p></div>
+    <div><span class="status insufficient">Insufficient data</span><p>Coinbase L3. One AMZN day is supporting evidence only.</p></div>
+    <div><span class="status offline">Offline only</span><p>The websocket collector: written and tested, never run live.</p></div>
+  </div>
+</section>
+
+<!-- ============================================================ REPRODUCE -->
+<section class="section" id="reproduce" aria-labelledby="rep-h">
+  <div class="section-head">
+    <p class="eyebrow">Reproducibility</p>
+    <h2 id="rep-h">Everything here is public, and every number traces to a file.</h2>
+  </div>
+  <div class="two-col">
+    <div class="prose">
+      <ul>
+        <li><a href="https://github.com/mtk1606/Kyle-s-Lambda-is-not-a-constant/blob/HEAD/README.md"><code>README.md</code></a>: the full write-up, phase by phase</li>
+        <li><a href="https://github.com/mtk1606/Kyle-s-Lambda-is-not-a-constant/blob/HEAD/docs/PREREGISTRATION.md"><code>docs/PREREGISTRATION.md</code></a>: predictions, pass rules, deviations log</li>
+        <li><a href="https://github.com/mtk1606/Kyle-s-Lambda-is-not-a-constant/blob/HEAD/results/scorecard.csv"><code>results/scorecard.csv</code></a> and <a href="https://github.com/mtk1606/Kyle-s-Lambda-is-not-a-constant/blob/HEAD/results/scorecard_as_run.csv"><code>scorecard_as_run.csv</code></a></li>
+        <li><a href="https://github.com/mtk1606/Kyle-s-Lambda-is-not-a-constant/tree/HEAD/results"><code>results/</code></a>: every phase's output as CSV, plus <code>figures/</code></li>
+        <li><a href="https://github.com/mtk1606/Kyle-s-Lambda-is-not-a-constant/tree/HEAD/scripts"><code>scripts/</code></a> and <a href="https://github.com/mtk1606/Kyle-s-Lambda-is-not-a-constant/tree/HEAD/tests"><code>tests/</code></a></li>
+        <li><a href="https://github.com/mtk1606/Kyle-s-Lambda-is-not-a-constant/blob/HEAD/data/README.md"><code>data/README.md</code></a>: where every dataset comes from and its known issues</li>
+        <li><a href="https://github.com/mtk1606/Kyle-s-Lambda-is-not-a-constant/blob/HEAD/site/ACCURACY_AUDIT.md"><code>site/ACCURACY_AUDIT.md</code></a>: every claim on this page mapped to its source</li>
+      </ul>
+    </div>
+    <pre class="cmd" aria-label="Commands to reproduce"><code>pip install -e ".[dev]"
+pytest
+
+# rebuild bars from the public trade mirror (see data/README.md)
+python scripts/00_build_bars.py --mirror /data/ticks \
+  --symbols BTCUSDT BNBUSDT ETHBTC LTCBTC NEOUSDT QTUMUSDT
+python scripts/00b_quote_to_usd.py --symbols ETHBTC LTCBTC
+
+# phases 1-4, dev pairs; holdout commands are in
+# docs/PREREGISTRATION.md
+python scripts/01_audit.py     --symbols BTCUSDT BNBUSDT
+python scripts/02b_markouts.py --symbols BTCUSDT BNBUSDT
+python scripts/02_dynamics.py  --symbols BTCUSDT BNBUSDT
+python scripts/03_signal.py    --symbols BTCUSDT BNBUSDT
+python scripts/04_economic.py  --symbols BTCUSDT BNBUSDT
+python scripts/05_book_venues.py --raw /data/raw
+python scripts/06_scorecard.py</code></pre>
+  </div>
+</section>
+
+<!-- ============================================================ ROLE -->
+<section class="section" id="role" aria-labelledby="role-h">
+  <div class="section-head">
+    <p class="eyebrow">My role</p>
+    <h2 id="role-h">What I did</h2>
+  </div>
+  <div class="prose">
+    <p>I framed the research question and designed the pipeline. I implemented the estimators, the reliability audit, the forecasting models and the walk-forward evaluation. I built the quoting and execution simulations and the holdout scorecard.</p>
+    <p>I found and corrected the confounds that favoured my own model, pre-registered the holdout predictions before running them, and kept the original thesis claims in the scorecard when I expected them to fail. After the first holdout run I found a units bug, fixed it with a regression test, preserved the original scorecard next to the corrected one, and kept the original verdicts.</p>
+    <p>I did not collect the trade data myself: it comes from public mirrors of Binance, LOBSTER and Coinbase data, listed in <code>data/README.md</code>. I used AI coding tools during development. The question, the experiments, the decisions about what counts as evidence, and the conclusions are mine.</p>
+    <p class="small muted">Nothing here is investment advice, and nothing was traded live.</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="site-footer">
+  <span>Mohamed El Khoudimi · Toronto · <a href="https://github.com/mtk1606">github.com/mtk1606</a></span>
+  <span>Data: Binance (2018 to 2019), LOBSTER sample, Coinbase samples. Charts drawn from <code>results/</code>.</span>
+</footer>
+
+<div class="tooltip" id="tooltip" role="status" aria-live="polite" hidden></div>
+<script type="module" src="./src/main.ts"></script>
+</body>
+</html>

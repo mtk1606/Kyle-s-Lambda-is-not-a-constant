@@ -2,6 +2,8 @@
 
 *Mohamed El Khoudimi · Toronto · [github.com/mtk1606](https://github.com/mtk1606)*
 
+**Project website:** an interactive explainer of this study lives in [`site/`](site/) (build and deploy notes in [`site/README.md`](site/README.md); every claim on it is mapped to evidence in [`site/ACCURACY_AUDIT.md`](site/ACCURACY_AUDIT.md)).
+
 ![Kyle's lambda on one BTCUSDT day](results/figures/fig1_headline.png)
 
 Kyle (1985) derives a market in which depth is constant through the trading period.
@@ -301,7 +303,7 @@ optimizes, so I'd treat these as upper bounds on the realized saving.
 
 | | lambda constant within session? (30-min blocks, permutation p) | 5-min reliability (Kyle / sqrt / OFI) | persistence of true 5-min lambda |
 |---|---|---|---|
-| AMZN, Nasdaq, 2012-06-21 | **rejected**, p = 0.001 (dispersion 2.5x null) | 0.57 / 0.56 / **0.79** | 0.35 (Kyle), 0.59 (OFI) |
+| AMZN, Nasdaq, 2012-06-21 | **rejected**, p = 0.001 (dispersion 2.5x null) | 0.57 / 0.56 / **0.78** | 0.35 (Kyle), 0.59 (OFI) |
 | Coinbase BTC-USDT, 6.5 h | not rejected, p = 0.76 | 0.20 / 0.30 / 0.23 | n/a |
 | Coinbase ETH-USDT, 4.5 h | not rejected, p = 0.69 | below 0 (pure noise) | n/a |
 
