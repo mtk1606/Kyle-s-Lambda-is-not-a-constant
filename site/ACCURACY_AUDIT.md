@@ -71,7 +71,6 @@ into the page at all: `site/scripts/export_site_data.py` exports them to `site/s
 | The impact slider is an illustration | `site/src/charts/impact.ts`: fixed λ = 20 and 80, labelled as illustrative on the page. |
 | Exploratory observations were not tested on the holdout | Maker realized-spread IC and the reversed quoting rule appear only in development analysis (README, Phase 3 and 4a); neither is a scored prediction. |
 | Nearby literature exists; no novelty claim | Goyenko, Holden and Trzcinka (2009), *JFE* 92(2); Easley, López de Prado and O'Hara (2012), *RFS* 25(5). |
-| I did not collect the data myself; I used AI coding tools | `data/README.md` lists every public source. Stated on the page under My role. |
 
 ## Claims deliberately qualified or left out
 
