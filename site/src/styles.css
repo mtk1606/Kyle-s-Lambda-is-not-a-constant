@@ -211,38 +211,33 @@ h4 { font-family: var(--font-body); font-size: var(--step-0); font-weight: 600; 
 .verdicts .claim small { display: block; color: var(--ink-3); font-size: var(--step--1); }
 .verdicts caption, .verdicts .cap { text-align: left; padding: 12px 18px; font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); background: var(--paper); border-bottom: 1px solid var(--rule); }
 
-/* ---------------------------------------------------------------- status labels */
+/* ---------------------------------------------------------------- editorial status labels
+   Status is conveyed typographically rather than with traffic-light pills. This keeps
+   the page closer to a research note than a dashboard or generated product UI. */
 .status {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  padding: 3px 8px;
-  border-radius: 999px;
+  display: inline-block;
+  font-family: var(--font-body);
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.015em;
+  text-transform: none;
+  line-height: 1.25;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   white-space: nowrap;
-  border: 1px solid transparent;
   justify-self: start;
   align-self: start;
 }
-.status::before { font-family: var(--font-body); font-size: 0.85rem; line-height: 1; }
-.status.supported { color: var(--good); background: var(--good-bg); }
-.status.supported::before { content: "✓"; }
-.status.not { color: var(--bad); background: var(--bad-bg); }
-.status.not::before { content: "✕"; }
-.status.partial { color: var(--partial); background: var(--partial-bg); }
-.status.partial::before { content: "△"; }
-.status.insufficient { color: var(--neutral); background: var(--neutral-bg); }
-.status.insufficient::before { content: "○"; }
-.status.exploratory { color: var(--accent); border-color: var(--accent); background: transparent; }
-.status.exploratory::before { content: "◇"; }
-.status.offline { color: var(--neutral); border-color: var(--rule-strong); background: transparent; }
-.status.offline::before { content: "□"; }
-.status.dev { color: var(--ink-2); border-color: var(--rule-strong); background: transparent; }
-.status.dev::before { content: "·"; font-weight: 700; }
+.status::before { content: none !important; }
+.status.supported { color: var(--ink); }
+.status.not { color: var(--ink-2); }
+.status.partial { color: var(--ink-2); font-style: italic; }
+.status.insufficient,
+.status.offline,
+.status.dev { color: var(--ink-3); font-weight: 500; }
+.status.exploratory { color: var(--accent); font-weight: 500; }
 
 /* ---------------------------------------------------------------- figures */
 figure { margin: 0; }
