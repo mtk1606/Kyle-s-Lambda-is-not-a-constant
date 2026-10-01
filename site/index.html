@@ -64,11 +64,10 @@
     <div><dt>Markets</dt><dd>6 Binance spot pairs · 1 Nasdaq day (AMZN) · ~11 h Coinbase L3</dd></div>
     <div><dt>Design</dt><dd>2 development pairs, 4 held-out pairs, predictions committed before the holdout ran</dd></div>
     <div><dt>Primary result</dt><dd>Lambda is forecastable. Forecast lambda does not predict maker losses.</dd></div>
-    <div><dt>Status</dt><dd>Research complete. Nothing deployed or traded live.</dd></div>
   </dl>
 
   <div class="verdicts" role="table" aria-label="Summary of results on the four held-out pairs">
-    <div class="cap" role="row"><span role="columnheader">The 30-second version · verdicts on the 4 held-out pairs</span></div>
+    <div class="cap" role="row"><span role="columnheader">Holdout results · 4 untouched pairs</span></div>
     <div class="row" role="row"><span class="claim" role="cell">Lambda is not constant through the day<small>Constancy rejected far more often than chance on 3 of 4 pairs</small></span><span role="cell"><span class="status supported">Supported</span></span></div>
     <div class="row" role="row"><span class="claim" role="cell">Lambda can be forecast from the past<small>Beats seasonality and a tuned trailing estimate on 4 of 4 pairs</small></span><span role="cell"><span class="status supported">Supported</span></span></div>
     <div class="row" role="row"><span class="claim" role="cell">Forecast lambda predicts which passive fills lose money<small>0 of 4 pairs</small></span><span role="cell"><span class="status not">Not supported</span></span></div>
@@ -76,7 +75,7 @@
     <div class="row" role="row"><span class="claim" role="cell">Scheduling trades on forecast lambda lowers execution cost<small>2 of 4 pairs significant; I required 3</small></span><span role="cell"><span class="status partial">Partial</span></span></div>
   </div>
 
-  <div class="lane hold mt" aria-label="Pre-registered holdout proof">
+  <div class="holdout-proof mt" aria-label="Pre-registered holdout proof">
     <span class="status supported">Pre-registered before holdout</span>
     <div class="pairs">Freeze commit <code>8f3e63b</code> · 25 Sep 2026 18:33:59 UTC</div>
     <p>I committed the hypotheses, pass rules and frozen code before running any analysis on ETHBTC, LTCBTC, NEOUSDT or QTUMUSDT. The first holdout results were committed later at 19:03:28 UTC. The verdicts above use the held-out pairs, not the development set.</p>
@@ -133,7 +132,6 @@ x_i  signed flow: buyer-initiated $ minus seller-initiated $, in $M
 <!-- ============================================================ CONTRADICTION -->
 <section class="section" id="contradiction" aria-labelledby="contra-h">
   <div class="section-head">
-    <p class="eyebrow">The contradiction</p>
     <h2 id="contra-h">The model says depth is constant. Desks treat it as moving.</h2>
   </div>
   <div class="two-col">
@@ -172,20 +170,19 @@ x_i  signed flow: buyer-initiated $ minus seller-initiated $, in $M
 <!-- ============================================================ QUESTIONS -->
 <section class="section" id="questions" aria-labelledby="q-h">
   <div class="section-head">
-    <p class="eyebrow">Three questions, each harder than the last</p>
     <h2 id="q-h">A forecast can be statistically right and economically useless.</h2>
   </div>
   <ol class="questions">
-    <li><div><div class="q">Is lambda stable enough to estimate at all?</div><p>If a 5-minute estimate is mostly noise, reacting to it is reacting to noise.</p><div class="difficulty" aria-label="Difficulty 1 of 3"><i class="on"></i><i></i><i></i><span>measurement</span></div></div></li>
-    <li><div><div class="q">Can next-window lambda be forecast from the past?</div><p>And is that anything more than the time-of-day pattern everyone already knows about?</p><div class="difficulty" aria-label="Difficulty 2 of 3"><i class="on"></i><i class="on"></i><i></i><span>prediction</span></div></div></li>
-    <li><div><div class="q">If I can forecast it, does that tell me who is about to lose money, or how to trade more cheaply?</div><p>This is the question a trading desk cares about. It needs the forecast to line up with a separate outcome, adverse selection or execution cost, on data I had not looked at.</p><div class="difficulty" aria-label="Difficulty 3 of 3"><i class="on"></i><i class="on"></i><i class="on"></i><span>economic value</span></div></div></li>
+    <li><div><div class="q">Is lambda stable enough to estimate at all?</div><p>If a 5-minute estimate is mostly noise, reacting to it is reacting to noise.</p></div></li>
+    <li><div><div class="q">Can next-window lambda be forecast from the past?</div><p>And is that anything more than the time-of-day pattern everyone already knows about?</p></div></li>
+    <li><div><div class="q">If I can forecast it, does that tell me who is about to lose money, or how to trade more cheaply?</div><p>This is the question a trading desk cares about. It needs the forecast to line up with a separate outcome, adverse selection or execution cost, on data I had not looked at.</p></div></li>
   </ol>
 </section>
 
 <!-- ============================================================ DATA + EXPERIMENT -->
 <section class="section" id="experiment" aria-labelledby="exp-h">
   <div class="section-head">
-    <p class="eyebrow">Data and design</p>
+    <p class="eyebrow"><b>Research design</b></p>
     <h2 id="exp-h">I designed on two pairs, then tested on four I had not analysed.</h2>
     <p class="lede">A holdout is data I deliberately refused to analyse until I had frozen the code and written down what would count as success.</p>
   </div>
@@ -337,7 +334,6 @@ x_i  signed flow: buyer-initiated $ minus seller-initiated $, in $M
 <!-- ============================================================ CENTRAL SURPRISE -->
 <section class="section" id="surprise" aria-labelledby="sur-h">
   <div class="section-head">
-    <p class="eyebrow">The central result</p>
     <h2 id="sur-h">I could predict lambda. I could not predict maker adverse selection with it.</h2>
   </div>
   <div class="matrix" role="list">
@@ -476,7 +472,6 @@ x_i  signed flow: buyer-initiated $ minus seller-initiated $, in $M
 <!-- ============================================================ CORRECTIONS -->
 <section class="section" id="corrections" aria-labelledby="cor-h">
   <div class="section-head">
-    <p class="eyebrow">Corrections</p>
     <h2 id="cor-h" >After the first holdout run I found a units bug. I fixed it, kept both scorecards, and no verdict changed.</h2>
   </div>
   <div class="two-col" id="bug">
@@ -509,7 +504,6 @@ x_i  signed flow: buyer-initiated $ minus seller-initiated $, in $M
 <!-- ============================================================ REJECTED -->
 <section class="section" id="rejected" aria-labelledby="rej-h">
   <div class="section-head">
-    <p class="eyebrow">What the evidence rejected</p>
     <h2 id="rej-h">Five things I believed, or might have claimed, that the data did not support.</h2>
   </div>
   <ul class="rejected">
@@ -544,7 +538,7 @@ x_i  signed flow: buyer-initiated $ minus seller-initiated $, in $M
 <!-- ============================================================ ENGINEERING -->
 <section class="section" id="engineering" aria-labelledby="eng-h">
   <div class="section-head">
-    <p class="eyebrow">Engineering</p>
+    <p class="eyebrow"><b>Implementation</b></p>
     <h2 id="eng-h">What I built</h2>
     <p class="lede">A Python package with a script per phase. Each script writes CSVs to <code>results/</code>, and every number on this page is exported from those files.</p>
   </div>
@@ -567,7 +561,6 @@ x_i  signed flow: buyer-initiated $ minus seller-initiated $, in $M
 <!-- ============================================================ VALIDATION -->
 <section class="section" id="validation" aria-labelledby="val-h">
   <div class="section-head">
-    <p class="eyebrow">Correctness</p>
     <h2 id="val-h">What protects the result, and what each check guards against</h2>
   </div>
   <div class="table-wrap">
@@ -593,7 +586,6 @@ x_i  signed flow: buyer-initiated $ minus seller-initiated $, in $M
 <!-- ============================================================ EVIDENCE BOUNDARY -->
 <section class="section" id="boundary" aria-labelledby="bnd-h">
   <div class="section-head">
-    <p class="eyebrow">Evidence boundary</p>
     <h2 id="bnd-h">How much weight each claim can carry</h2>
   </div>
   <div class="legend-block">
@@ -610,7 +602,6 @@ x_i  signed flow: buyer-initiated $ minus seller-initiated $, in $M
 <!-- ============================================================ REPRODUCE -->
 <section class="section" id="reproduce" aria-labelledby="rep-h">
   <div class="section-head">
-    <p class="eyebrow">Reproducibility</p>
     <h2 id="rep-h">Everything here is public, and every number traces to a file.</h2>
   </div>
   <div class="two-col">
@@ -648,7 +639,6 @@ python scripts/06_scorecard.py</code></pre>
 <!-- ============================================================ ROLE -->
 <section class="section" id="role" aria-labelledby="role-h">
   <div class="section-head">
-    <p class="eyebrow">My role</p>
     <h2 id="role-h">What I did</h2>
   </div>
   <div class="prose">
